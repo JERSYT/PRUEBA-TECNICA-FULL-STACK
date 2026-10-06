@@ -52,5 +52,15 @@ services:
     ports:
       - "3000:80"
 
+  adminer:
+    image: adminer:latest
+    container_name: soporte_adminer
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
 volumes:
   postgres_data:
