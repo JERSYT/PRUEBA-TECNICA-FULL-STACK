@@ -134,14 +134,17 @@ export class TicketService {
       return created;
     });
 
-    // Notificación por correo (no bloquea: el servicio nunca lanza).
-    await notificationService.notifyTicketCreated({
-      id: ticket.id,
-      title: ticket.title,
-      applicant: ticket.applicant,
-      category: ticket.category,
-      priority: ticket.priority,
-    });
+    // Notificación por correo en segundo plano: no se espera (await) para que
+    // un SMTP lento o caído jamás retrase ni rompa la respuesta de la API.
+    notificationService
+      .notifyTicketCreated({
+        id: ticket.id,
+        title: ticket.title,
+        applicant: ticket.applicant,
+        category: ticket.category,
+        priority: ticket.priority,
+      })
+      .catch(() => undefined);
 
     return ticket;
   }
@@ -159,10 +162,24 @@ export class TicketService {
       );
     }
 
-    return prisma.ticket.update({
+    const updatedTicket = await prisma.ticket.update({
       where: { id },
       data: dto,
     });
+
+    // Segundo plano: ver comentario en createTicket.
+    notificationService
+      .notifyTicketUpdated({
+        id: updatedTicket.id,
+        title: updatedTicket.title,
+        applicant: updatedTicket.applicant,
+        category: updatedTicket.category,
+        priority: updatedTicket.priority,
+        status: updatedTicket.status,
+      })
+      .catch(() => undefined);
+
+    return updatedTicket;
   }
 
   async changeStatus(id: string, dto: ChangeStatusDTO) {
@@ -202,18 +219,20 @@ export class TicketService {
       return changed;
     });
 
-    // Notificación por correo (no bloquea: el servicio nunca lanza).
-    await notificationService.notifyStatusChanged(
-      {
-        id: updated.id,
-        title: updated.title,
-        priority: updated.priority,
-        status: updated.status,
-      },
-      previousStatusHolder.value ?? Status.Pendiente,
-      dto.responsible,
-      dto.observation
-    );
+    // Segundo plano: ver comentario en createTicket.
+    notificationService
+      .notifyStatusChanged(
+        {
+          id: updated.id,
+          title: updated.title,
+          priority: updated.priority,
+          status: updated.status,
+        },
+        previousStatusHolder.value ?? Status.Pendiente,
+        dto.responsible,
+        dto.observation
+      )
+      .catch(() => undefined);
 
     return updated;
   }
