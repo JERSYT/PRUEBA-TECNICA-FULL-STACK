@@ -30,6 +30,14 @@ services:
       PORT: 4000
       NODE_ENV: production
       DATABASE_URL: "postgresql://postgres:postgrespassword@postgres:5432/soporte_tecnico_db?schema=public"
+      NOTIFY_ENABLED: ${NOTIFY_ENABLED:-true}
+      NOTIFY_FROM: ${NOTIFY_FROM:-Mesa de Ayuda <no-reply@soporte.local>}
+      NOTIFY_TO: ${NOTIFY_TO:-mesa-ayuda@example.com}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
     ports:
       - "4000:4000"
 
