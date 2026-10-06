@@ -17,7 +17,7 @@ Aplicación Full Stack para registrar y dar seguimiento a solicitudes internas d
 
 ```bash
 # 1. Clonar y entrar
-git clone <URL_DEL_REPO>
+git clone https://github.com/JERSYT/PRUEBA-TECNICA-FULL-STACK.git
 cd "PRUEBA TECNICA"
 
 # 2. Variables de entorno (los .env reales NO se versionan, usa los .example)
