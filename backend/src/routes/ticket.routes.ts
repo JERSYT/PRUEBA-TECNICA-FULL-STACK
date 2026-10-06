@@ -1,7 +1,15 @@
 import { Router } from 'express';
 import { ticketController } from '../controllers/ticket.controller.js';
+import { notificationController } from '../controllers/notification.controller.js';
 
 const router = Router();
+
+router.get('/notifications', (req, res, next) =>
+  notificationController.listRecent(req, res, next)
+);
+router.post('/notifications/test', (req, res, next) =>
+  notificationController.sendTest(req, res, next)
+);
 
 router.get('/tickets/stats', (req, res, next) => ticketController.getStats(req, res, next));
 router.get('/tickets', (req, res, next) => ticketController.listTickets(req, res, next));

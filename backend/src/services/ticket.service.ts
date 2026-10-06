@@ -9,6 +9,7 @@ import {
   validateStatusTransition,
   BusinessRuleError,
 } from './businessRules.service.js';
+import { notificationService } from './notification.service.js';
 import { Prisma, Status } from '@prisma/client';
 
 export class TicketService {
@@ -107,8 +108,8 @@ export class TicketService {
   }
 
   async createTicket(dto: CreateTicketDTO) {
-    return prisma.$transaction(async (tx) => {
-      const ticket = await tx.ticket.create({
+    const ticket = await prisma.$transaction(async (tx) => {
+      const created = await tx.ticket.create({
         data: {
           title: dto.title,
           description: dto.description,
@@ -122,7 +123,7 @@ export class TicketService {
       // Registro inicial en el historial
       await tx.ticketHistory.create({
         data: {
-          ticketId: ticket.id,
+          ticketId: created.id,
           previousStatus: Status.Pendiente,
           newStatus: Status.Pendiente,
           responsible: dto.applicant,
@@ -130,8 +131,19 @@ export class TicketService {
         },
       });
 
-      return ticket;
+      return created;
     });
+
+    // Notificación por correo (no bloquea: el servicio nunca lanza).
+    await notificationService.notifyTicketCreated({
+      id: ticket.id,
+      title: ticket.title,
+      applicant: ticket.applicant,
+      category: ticket.category,
+      priority: ticket.priority,
+    });
+
+    return ticket;
   }
 
   async updateTicket(id: string, dto: UpdateTicketDTO) {
@@ -154,7 +166,8 @@ export class TicketService {
   }
 
   async changeStatus(id: string, dto: ChangeStatusDTO) {
-    return prisma.$transaction(async (tx) => {
+    const previousStatusHolder: { value: Status | null } = { value: null };
+    const updated = await prisma.$transaction(async (tx) => {
       const ticket = await tx.ticket.findUnique({ where: { id } });
       if (!ticket) {
         throw new BusinessRuleError('Solicitud no encontrada', 404);
@@ -168,7 +181,9 @@ export class TicketService {
         dto.observation
       );
 
-      const updated = await tx.ticket.update({
+      previousStatusHolder.value = ticket.status;
+
+      const changed = await tx.ticket.update({
         where: { id },
         data: { status: dto.newStatus },
       });
@@ -184,8 +199,23 @@ export class TicketService {
         },
       });
 
-      return updated;
+      return changed;
     });
+
+    // Notificación por correo (no bloquea: el servicio nunca lanza).
+    await notificationService.notifyStatusChanged(
+      {
+        id: updated.id,
+        title: updated.title,
+        priority: updated.priority,
+        status: updated.status,
+      },
+      previousStatusHolder.value ?? Status.Pendiente,
+      dto.responsible,
+      dto.observation
+    );
+
+    return updated;
   }
 
   async deleteTicket(id: string) {
