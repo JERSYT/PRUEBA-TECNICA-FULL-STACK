@@ -38,6 +38,10 @@ function getTransport(): { transporter: Transporter | null; mode: 'log' | 'smtp'
     host,
     port: Number(process.env.SMTP_PORT ?? '587'),
     secure: (process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
+    // Timeouts para que un SMTP lento/caído nunca cuelgue la API.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth:
       process.env.SMTP_USER && process.env.SMTP_PASS
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
@@ -120,6 +124,27 @@ export const notificationService = {
         `Responsable: ${responsible}`,
         `Prioridad: ${ticket.priority}`,
         observation ? `Observación: ${observation}` : 'Observación: (sin observación)',
+      ].join('\n')
+    );
+  },
+
+  notifyTicketUpdated(ticket: {
+    id: string;
+    title: string;
+    applicant: string;
+    category: string;
+    priority: string;
+    status: string;
+  }): Promise<NotifyResult> {
+    return send(
+      process.env.NOTIFY_TO || 'mesa-ayuda@example.com',
+      `Solicitud actualizada: ${ticket.title}`,
+      [
+        'Se actualizaron los datos de una solicitud de soporte.',
+        `ID: ${ticket.id}`,
+        `Título: ${ticket.title}`,
+        `Solicitante: ${ticket.applicant}`,
+        `Categoría: ${ticket.category} | Prioridad: ${ticket.priority} | Estado: ${ticket.status}`,
       ].join('\n')
     );
   },

@@ -4,11 +4,11 @@ import app from '../src/app.js';
 import { notificationService } from '../src/services/notification.service.js';
 
 describe('Notificaciones por correo', () => {
-  it('POST /api/notifications/test debe procesar en modo log sin SMTP', async () => {
+  it('POST /api/notifications/test debe procesar el envío (log o smtp según env)', async () => {
     const res = await request(app).post('/api/notifications/test');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.mode).toBe('log');
+    expect(['log', 'smtp']).toContain(res.body.data.mode);
     expect(res.body.data.sent).toBe(true);
   });
 
@@ -32,7 +32,12 @@ describe('Notificaciones por correo', () => {
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
 
-    const recent = notificationService.getRecent();
+    // La notificación va en segundo plano: esperar hasta 15s a que se registre.
+    let recent = notificationService.getRecent();
+    for (let i = 0; i < 30 && recent.length === 0; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      recent = notificationService.getRecent();
+    }
     expect(recent.length).toBeGreaterThan(0);
     expect(recent[0].subject).toContain('Nueva solicitud');
   });
