@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  Hardware
+  Software
+  Red
+  Accesos
+  Otros
+}
+
+enum Priority {
+  Baja
+  Media
+  Alta
+  Critica
+}
+
+enum Status {
+  Pendiente
+  En_progreso
+  Resuelta
+  Cancelada
+}
+
+model Ticket {
+  id           String          @id @default(uuid())
+  title        String
+  description  String
+  applicant    String
+  category     Category
+  priority     Priority
+  status       Status          @default(Pendiente)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  history      TicketHistory[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model TicketHistory {
+  id             String    @id @default(uuid())
+  ticketId       String
+  ticket         Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  previousStatus Status
+  newStatus      Status
+  changedAt      DateTime  @default(now())
+  responsible    String
+  observation    String?
+
+  @@index([ticketId])
+  @@index([changedAt])
+}
