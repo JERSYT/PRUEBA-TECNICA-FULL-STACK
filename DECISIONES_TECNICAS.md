@@ -169,7 +169,7 @@ TicketHistory { id uuid, ticketId FK cascade, previousStatus, newStatus, changed
 1. **Eliminar vs cancelar:** la prueba dice "eliminar o cancelar". Se implementan ambas: `DELETE` borra físicamente (con confirmación) y `PATCH .../status → Cancelada` conserva auditoría. Se documenta para que el evaluador no lo vea como ambigüedad.
 2. **`En_progreso → Cancelada` permitida** aunque no estaba explícita: es coherente (un ticket en curso puede cancelarse por duplicidad o por decisión del solicitante) y no viola ninguna regla prohibida.
 3. **`Resuelta/Cancelada` no editables ni transicionables:** se decidió tratarlos como finales para garantizar inmutabilidad de auditoría. Cualquier intento devuelve 422 con mensaje claro.
-4. **Notificaciones = Sonner toasts:** cubre el opcional sin infraestructura extra; email/websockets se descartaron por costo/beneficio en 6h.
+4. **Notificaciones = Sonner toasts + Nodemailer sencillo:** in-app para feedback inmediato y correo (creación + cambio de estado) con `notification.service.ts`. Sin `SMTP_HOST` trabaja en modo `log` (consola + `GET /api/notifications`); con `SMTP_*` envía real (Gmail App Password o Mailtrap). `NOTIFY_ENABLED=false` lo apaga y los errores SMTP nunca rompen el 201/200. Se eligió Nodemailer por ser el estándar simple en Node sin montar un "servlet" aparte ni colas (over-engineering para 6h).
 5. **`impeccable` no instalado:** `npx impeccable install` falló (zip inválido en la skill). Se sustituyó por diseño manual con Tailwind + jerarquía tipográfica y micro-interacciones equivalentes.
 6. **Puerto DB 5433 en host:** evita colisión con Postgres local (servicio `postgresql-x64-17` en :5432). Documentado en README y `.env.example`.
 

@@ -20,6 +20,10 @@ export const swaggerDocument = {
       name: 'Tickets',
       description: 'Operaciones CRUD, búsquedas, filtros y transiciones de estado de tickets',
     },
+    {
+      name: 'Notifications',
+      description: 'Notificaciones por correo (Nodemailer) ante eventos de tickets',
+    },
   ],
   paths: {
     '/tickets/stats': {
@@ -134,6 +138,24 @@ export const swaggerDocument = {
         responses: {
           200: { description: 'Historial de cambios cronológico' },
           404: { description: 'Solicitud no encontrada' },
+        },
+      },
+    },
+    '/notifications': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Lista los últimos correos procesados (modo log o SMTP)',
+        responses: {
+          200: { description: 'Listado de notificaciones recientes' },
+        },
+      },
+    },
+    '/notifications/test': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Envía un correo de prueba con la configuración actual',
+        responses: {
+          200: { description: 'Resultado del envío de prueba (mode: log/smtp/disabled)' },
         },
       },
     },

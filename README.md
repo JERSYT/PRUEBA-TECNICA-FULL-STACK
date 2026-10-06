@@ -61,7 +61,7 @@ npm run dev        # http://localhost:3000
 
 | Archivo | Variables |
 |---|---|
-| `backend/.env` (ver `backend/.env.example`) | `PORT=4000`, `DATABASE_URL=postgresql://...`, `NODE_ENV=development` |
+| `backend/.env` (ver `backend/.env.example`) | `PORT`, `DATABASE_URL`, `NODE_ENV`, `NOTIFY_ENABLED`, `NOTIFY_FROM`, `NOTIFY_TO`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` |
 | `frontend/.env` (ver `frontend/.env.example`) | `VITE_API_BASE_URL=http://localhost:4000/api` |
 
 > Por seguridad los `.env` están en `.gitignore` y nunca se suben a GitHub. Solo se versionan los `.env.example`.
@@ -74,7 +74,7 @@ cd backend
 npm run dev          # desarrollo con hot-reload
 npm run build        # compila TypeScript a dist/
 npm start            # producción (requiere build)
-npm test             # Vitest: 19 tests (reglas + API)
+npm test             # Vitest: 23 tests (reglas + API + notificaciones)
 npm run seed         # 6 tickets de ejemplo con historial
 npx prisma studio    # explorador visual de la BD
 
@@ -98,8 +98,18 @@ npx playwright show-report
 | PATCH | `/api/tickets/:id/status` | Cambiar estado (máquina de estados + auditoría) |
 | DELETE | `/api/tickets/:id` | Eliminar |
 | GET | `/api/tickets/:id/history` | Bitácora cronológica |
+| GET | `/api/notifications` | Últimos correos procesados (modo log/SMTP) |
+| POST | `/api/notifications/test` | Correo de prueba con la configuración actual |
 | GET | `/health` | Health check |
 | GET | `/api-docs` | Swagger UI |
+
+## Notificaciones
+
+- **In-app:** toasts Sonner en el frontend (crear, actualizar, cambiar estado, eliminar).
+- **Correo (Nodemailer):** al crear un ticket y al cambiar de estado se envía correo a `NOTIFY_TO`.
+  - Sin `SMTP_HOST`: modo `log` (consola + `GET /api/notifications`, sin credenciales).
+  - Con `SMTP_HOST/USER/PASS` (ej. Gmail con App Password o Mailtrap): envío SMTP real.
+  - `NOTIFY_ENABLED=false` desactiva el envío sin tocar código. Los fallos SMTP nunca rompen el flujo (201/200 igual).
 
 ## Reglas de negocio (resumen)
 
